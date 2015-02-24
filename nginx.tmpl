@@ -68,6 +68,9 @@ upstream {{ $host }} {
 {{ end }}
 }
 
+{{/* Get the timeout defined by containers w/ the same vhost */}}
+{{ $vhostTimeout := (first (groupByKeys $containers "Env.VHOST_TIMEOUT")) }}
+
 {{/* Get the first client max body size defined by containers w/ the same vhost */}}
 {{ $clientMaxBodySize := (first (groupByKeys $containers "Env.MAX_UPLOAD_SIZE")) }}
 
@@ -94,6 +97,14 @@ server {
 server {
 	server_name {{ $host }};
 	listen 443 ssl;
+
+	{{/* Set the Nginx timeout option from environment variables */}}
+	{{ if $vhostTimeout }}
+	proxy_connect_timeout {{ $vhostTimeout }};
+	proxy_send_timeout {{ $vhostTimeout }};
+	proxy_read_timeout {{ $vhostTimeout }};
+	send_timeout {{ $vhostTimeout }};
+	{{ end }}
 
 	{{/* Set the Nginx client_max_body_size option from environment variables */}}
 	{{ if $clientMaxBodySize }}
@@ -124,6 +135,14 @@ server {
 
 server {
 	server_name {{ $host }};
+
+	{{/* Set the Nginx timeout option from environment variables */}}
+	{{ if $vhostTimeout }}
+	proxy_connect_timeout {{ $vhostTimeout }};
+	proxy_send_timeout {{ $vhostTimeout }};
+	proxy_read_timeout {{ $vhostTimeout }};
+	send_timeout {{ $vhostTimeout }};
+	{{ end }}
 
 	{{/* Set the Nginx client_max_body_size option from environment variables */}}
 	{{ if $clientMaxBodySize }}
